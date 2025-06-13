@@ -28,7 +28,7 @@ class Assistant:
         self.agent = create_openai_functions_agent(llm=llm, tools=self.tools, prompt=self.prompt)
 
 
-    def chat(self, chat_data: ChatPayload) -> str:
+    def chat(self, chat_data: ChatPayload) -> dict:
         """
         Chat interface for the assistant.
 
@@ -40,8 +40,8 @@ class Assistant:
             Agent's response
         """
         try:
-            config = self.tracing_manager.get_config(chat_data.user_id)
-            memory = MemoryManager(chat_data.user_id).get_memory()
+            config = self.tracing_manager.get_config(chat_data.id)
+            memory = MemoryManager(chat_data.id).get_memory()
 
             agent_executor = AgentExecutor(agent=self.agent,
                                            tools=self.tools,
@@ -52,7 +52,9 @@ class Assistant:
 
             # Invoke the agent with user input and LangSmith trace config
             response = agent_executor.invoke({"input": chat_data.query}, config=config)
-            return response["output"]
+            return {"response": response["output"]}
 
         except Exception as e:
-            return f"Sorry, I encountered an error: {str(e)}"
+            return {"response": f"Sorry, I encountered an error: {str(e)}"}
+
+

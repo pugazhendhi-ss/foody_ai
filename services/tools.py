@@ -1,7 +1,6 @@
 import os
 from typing import Dict
 
-import httpx
 from dotenv import load_dotenv
 import requests
 from langchain.tools import tool
@@ -9,6 +8,7 @@ from datetime import date as dt_date
 from models.tool_model import RestaurantSearchArgs, TableReserveArgs
 
 load_dotenv()
+
 
 RESTAURANT_SEARCH_URL = os.getenv('RESTAURANT_SEARCH_URL')
 TABLE_RESERVE_URL = os.getenv('TABLE_RESERVE_URL')
@@ -62,7 +62,7 @@ def search_restaurant_tool(city: str, locality: str, cuisine: str, date: str, ti
 
 @tool(
     "reserve_table",
-    return_direct=True,
+    return_direct=False,
     args_schema=TableReserveArgs,
     description="Reserve a table at a specific restaurant using restaurant ID, date, time, guest count, and user details."
                 "NOTE: Before booking a table use 'search_restaurant' tool get the restaurant ID and to check the slot availability"
@@ -108,11 +108,19 @@ def reserve_table_tool(
         }
 
         response = requests.post(TABLE_RESERVE_URL, json=payload, headers=headers)
-        tool_motive = {
-            "status": "success",
-            "reservation_response": response.json()
-        }
-        return f"{tool_motive}"
+        if response.ok:
+            tool_motive = {
+                "status": "success",
+                "reservation_response": response.json()
+            }
+            return f"{tool_motive}"
+        else:
+            tool_motive = {
+                "status": "error",
+                "reservation_response": response.json()
+            }
+            return f"{tool_motive}"
+
 
     except Exception as e:
         return {"error": "Exception", "details": str(e)}

@@ -1,6 +1,7 @@
 import redis
-from langchain.memory import ConversationBufferMemory
-from langchain_community.chat_message_histories import RedisChatMessageHistory
+from langchain.memory import ConversationBufferWindowMemory
+from langchain_community.chat_message_histories import SQLChatMessageHistory
+
 
 class MemoryManager:
     def __init__(self, tenant_id: str, redis_url: str = "redis://localhost:6379/0"):
@@ -10,15 +11,21 @@ class MemoryManager:
         self.memory = self._build_memory()
 
     def _build_memory(self):
-        history = RedisChatMessageHistory(
+
+        history = SQLChatMessageHistory(
             session_id=self.tenant_id,
-            url=self.redis_url
+            connection_string=self.redis_url
         )
-        return ConversationBufferMemory(
+
+        print(history.messages)
+
+        return ConversationBufferWindowMemory(
             memory_key="chat_history",
             chat_memory=history,
-            return_messages=True
+            return_messages=True,
+            k=10
         )
+
 
     def get_memory(self):
         return self.memory

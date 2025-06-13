@@ -13,6 +13,7 @@ def assistant(
         chat_payload: ChatPayload,
         assistant_service: Assistant = Depends(get_assistant)
 ):
+    print(f"ID: {chat_payload.id}")
     return assistant_service.chat(chat_payload)
 
 
